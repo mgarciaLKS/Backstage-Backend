@@ -1,3 +1,6 @@
+// packages/app/src/App.tsx
+// --- VERSIÓN FINAL PARA LA APLICACIÓN COMPLETA ---
+
 import { Navigate, Route } from 'react-router-dom';
 import { apiDocsPlugin, ApiExplorerPage } from '@backstage/plugin-api-docs';
 import {
@@ -11,7 +14,7 @@ import {
 } from '@backstage/plugin-catalog-import';
 import { ScaffolderPage, scaffolderPlugin } from '@backstage/plugin-scaffolder';
 import { orgPlugin } from '@backstage/plugin-org';
-// import { SearchPage } from '@backstage/plugin-search'; // No usar el SearchPage de plugin-search directamente
+import { SearchPage } from '@backstage/plugin-search';
 import {
   TechDocsIndexPage,
   techdocsPlugin,
@@ -20,35 +23,29 @@ import {
 import { TechDocsAddons } from '@backstage/plugin-techdocs-react';
 import { ReportIssue } from '@backstage/plugin-techdocs-module-addons-contrib';
 import { UserSettingsPage } from '@backstage/plugin-user-settings';
-import { apis } from './apis'; // Tu archivo apis.ts con los console.log
+import { apis } from './apis';
 import { entityPage } from './components/catalog/EntityPage';
-import { searchPage } from './components/search/SearchPage'; // Importa el export correcto (JSX)
-import { Root } from './components/Root';
+import { searchPage } from './components/search/SearchPage';
+import { Root } from './components/Root'; // Usa tu componente Root original (con la Sidebar)
 
 import {
   AlertDisplay,
   OAuthRequestDialog,
-  ProxiedSignInPage,
+  // ProxiedSignInPage, // Ya no se usa
 } from '@backstage/core-components';
 import { createApp } from '@backstage/app-defaults';
 import { AppRouter, FlatRoutes } from '@backstage/core-app-api';
-import { useApi, microsoftAuthApiRef } from '@backstage/core-plugin-api';
 import { CatalogGraphPage } from '@backstage/plugin-catalog-graph';
 import { RequirePermission } from '@backstage/plugin-permission-react';
 import { catalogEntityCreatePermission } from '@backstage/plugin-catalog-common/alpha';
-import React from 'react';
 
-// Log para ver el array de APIs que se pasa a createApp
-console.log("DEBUG App.tsx: Pasando estas APIs a createApp:", apis);
+import { MyCustomSignInPage } from './components/MyCustomSignInPage';
 
 const app = createApp({
   apis,
   components: {
     SignInPage: (props) => (
-      <ProxiedSignInPage
-        {...props}
-        provider="microsoft"
-      />
+      <MyCustomSignInPage {...props} />
     ),
   },
   bindRoutes({ bind }) {
@@ -70,41 +67,8 @@ const app = createApp({
   },
 });
 
-// -------- Inicio de Bloque de Debug para forzar uso de API --------
-const TestApiComponent = () => {
-  const authApiInstance = useApi(microsoftAuthApiRef);
-
-  React.useEffect(() => {
-    if (authApiInstance) {
-      console.log("DEBUG App.tsx TestApiComponent: Intentando obtener accessToken y profileInfo");
-      authApiInstance.getAccessToken()
-        .then((token: string | undefined) => {
-          console.log("DEBUG App.tsx TestApiComponent: AccessToken obtenido:", token);
-        })
-        .catch((err: any) => {
-          console.error("DEBUG App.tsx TestApiComponent: Error al obtener accessToken:", err);
-        });
-      if ('getProfile' in authApiInstance && typeof authApiInstance.getProfile === 'function') {
-        authApiInstance.getProfile()
-          .then((profile: any) => {
-            console.log("DEBUG App.tsx TestApiComponent: Profile obtenido:", profile);
-          })
-          .catch((err: any) => {
-            console.error("DEBUG App.tsx TestApiComponent: Error al obtener profile:", err);
-          });
-      } else {
-        console.warn("DEBUG App.tsx TestApiComponent: authApiInstance no tiene método getProfile");
-      }
-    }
-  }, [authApiInstance]);
-
-  return null; // Este componente no renderiza nada visible
-};
-// -------- Fin de Bloque de Debug --------
-
 const routes = (
   <FlatRoutes>
-    {/* La ruta de TestApiComponent ya no es necesaria aquí si lo renderizamos directamente en createRoot */}
     <Route path="/" element={<Navigate to="catalog" />} />
     <Route path="/catalog" element={<CatalogIndexPage />} />
     <Route
@@ -132,8 +96,9 @@ const routes = (
         </RequirePermission>
       }
     />
-    {/* Usa el export JSX searchPage directamente como elemento */}
-    <Route path="/search" element={searchPage} />
+    <Route path="/search" element={<SearchPage />}>
+      {searchPage}
+    </Route>
     <Route path="/settings" element={<UserSettingsPage />} />
     <Route path="/catalog-graph" element={<CatalogGraphPage />} />
   </FlatRoutes>
@@ -141,9 +106,9 @@ const routes = (
 
 export default app.createRoot(
   <>
-    <TestApiComponent /> {/* Renderizamos el componente de prueba aquí */}
     <AlertDisplay />
     <OAuthRequestDialog />
+
     <AppRouter>
       <Root>{routes}</Root>
     </AppRouter>
