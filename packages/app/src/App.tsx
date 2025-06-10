@@ -1,5 +1,7 @@
-// --- IMPORTACIONES ---
-import { Navigate, Route } from 'react-router-dom'; // Necesario para 'routes'
+// packages/app/src/App.tsx
+// --- VERSIÓN FINAL PARA LA APLICACIÓN COMPLETA ---
+
+import { Navigate, Route } from 'react-router-dom';
 import { apiDocsPlugin, ApiExplorerPage } from '@backstage/plugin-api-docs';
 import {
   CatalogEntityPage,
@@ -12,7 +14,7 @@ import {
 } from '@backstage/plugin-catalog-import';
 import { ScaffolderPage, scaffolderPlugin } from '@backstage/plugin-scaffolder';
 import { orgPlugin } from '@backstage/plugin-org';
-// import { SearchPage } from '@backstage/plugin-search'; // Tu SearchPage custom
+import { SearchPage } from '@backstage/plugin-search';
 import {
   TechDocsIndexPage,
   techdocsPlugin,
@@ -24,29 +26,26 @@ import { UserSettingsPage } from '@backstage/plugin-user-settings';
 import { apis } from './apis';
 import { entityPage } from './components/catalog/EntityPage';
 import { searchPage } from './components/search/SearchPage';
-import { Root } from './components/Root'; // <--- VUELVE A IMPORTAR TU ROOT (simplificado por ahora)
+import { Root } from './components/Root'; // Usa tu componente Root original (con la Sidebar)
 
 import {
   AlertDisplay,
   OAuthRequestDialog,
+  // ProxiedSignInPage, // Ya no se usa
 } from '@backstage/core-components';
 import { createApp } from '@backstage/app-defaults';
-import { AppRouter, FlatRoutes } from '@backstage/core-app-api'; // <--- VUELVE A IMPORTAR AppRouter y FlatRoutes
-// import { useApi, microsoftAuthApiRef } from '@backstage/core-plugin-api';
+import { AppRouter, FlatRoutes } from '@backstage/core-app-api';
 import { CatalogGraphPage } from '@backstage/plugin-catalog-graph';
 import { RequirePermission } from '@backstage/plugin-permission-react';
 import { catalogEntityCreatePermission } from '@backstage/plugin-catalog-common/alpha';
-// import { useEffect } from 'react'; // React se importa globalmente o vía React.useEffect si es necesario
-import { MyCustomSignInPage } from './components/MyCustomSignInPage'; // Importa tu página custom
-// --- FIN IMPORTACIONES ---
 
-console.log("DEBUG App.tsx: Pasando estas APIs a createApp:", apis);
+import { MyCustomSignInPage } from './components/MyCustomSignInPage';
 
 const app = createApp({
   apis,
   components: {
-    SignInPage: (props) => ( // Sigue siendo la prop SignInPage
-      <MyCustomSignInPage {...props} /> // Usa tu componente personalizado
+    SignInPage: (props) => (
+      <MyCustomSignInPage {...props} />
     ),
   },
   bindRoutes({ bind }) {
@@ -68,37 +67,6 @@ const app = createApp({
   },
 });
 
-// // -------- TestApiComponent (se mantiene) --------
-// const TestApiComponent = () => {
-//   const authApiInstance = useApi(microsoftAuthApiRef);
-//   useEffect(() => {
-//     if (authApiInstance) {
-//       console.log("DEBUG App.tsx TestApiComponent: Intentando obtener accessToken y profileInfo");
-//       authApiInstance.getAccessToken()
-//         .then((token: string | undefined) => {
-//           console.log("DEBUG App.tsx TestApiComponent: AccessToken obtenido:", token ? token.substring(0, 20) + "..." : token);
-//         })
-//         .catch((err: any) => {
-//           console.error("DEBUG App.tsx TestApiComponent: Error al obtener accessToken:", err);
-//         });
-//       if ('getProfile' in authApiInstance && typeof authApiInstance.getProfile === 'function') {
-//         authApiInstance.getProfile()
-//           .then((profile: any) => {
-//             console.log("DEBUG App.tsx TestApiComponent: Profile obtenido:", profile);
-//           })
-//           .catch((err: any) => {
-//             console.error("DEBUG App.tsx TestApiComponent: Error al obtener profile:", err);
-//           });
-//       } else {
-//         console.warn("DEBUG App.tsx TestApiComponent: authApiInstance no tiene método getProfile");
-//       }
-//     }
-//   }, [authApiInstance]);
-//   return null;
-// };
-// -------- Fin TestApiComponent --------
-
-// --- VUELVEN LAS RUTAS ORIGINALES ---
 const routes = (
   <FlatRoutes>
     <Route path="/" element={<Navigate to="catalog" />} />
@@ -128,19 +96,19 @@ const routes = (
         </RequirePermission>
       }
     />
-    <Route path="/search" element={searchPage} />
+    <Route path="/search" element={<SearchPage />}>
+      {searchPage}
+    </Route>
     <Route path="/settings" element={<UserSettingsPage />} />
     <Route path="/catalog-graph" element={<CatalogGraphPage />} />
   </FlatRoutes>
 );
-// --- FIN RUTAS ORIGINALES ---
 
 export default app.createRoot(
   <>
-    {/* <TestApiComponent /> Mantenlo para que se haga el login */}
-
-    <AlertDisplay/>
+    <AlertDisplay />
     <OAuthRequestDialog />
+
     <AppRouter>
       <Root>{routes}</Root>
     </AppRouter>
