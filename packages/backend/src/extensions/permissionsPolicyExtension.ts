@@ -25,12 +25,18 @@ class LksPermissionPolicy implements PermissionPolicy {
     user?: PolicyQueryUser,
   ): Promise<PolicyDecision> {
 
-    // 1. Regla de Super Usuario
-    if (user?.identity.userEntityRef === 'user:default/mikel.garcia') {
+    // === INICIO DE MODIFICACIÓN: Administrador por Grupo ===
+    // En lugar de comprobar un usuario específico, ahora se comprueba si el usuario
+    // es miembro del grupo 'equipo-qa'.
+    // La referencia completa del grupo es 'group:default/equipo-qa'.
+    if (user?.identity.ownershipEntityRefs.includes('group:default/team-qa')) {
       return { result: AuthorizeResult.ALLOW };
     }
+    // === FIN DE MODIFICACIÓN ===
 
     // 2. Regla para leer entidades del catálogo
+    // Se mantiene la lógica original. Funcionará para ver los grupos si
+    // estos tienen el campo "spec.owner" apuntando a sí mismos.
     if (isPermission(request.permission, catalogEntityReadPermission)) {
       return {
         result: AuthorizeResult.CONDITIONAL,
@@ -42,7 +48,9 @@ class LksPermissionPolicy implements PermissionPolicy {
       };
     }
     
-    // 3. Para cualquier otra acción, permitimos por defecto.
+    // 3. Para cualquier otra acción, permitimos por defecto (según tu código original).
+    // Nota: Para un entorno productivo, se recomienda cambiar esto a DENY 
+    // y añadir permisos explícitos para cada acción necesaria.
     return { result: AuthorizeResult.ALLOW };
   }
 }
@@ -50,17 +58,14 @@ class LksPermissionPolicy implements PermissionPolicy {
 /**
  * El módulo del backend para los permisos, que registra nuestra política personalizada.
  */
-// --- INICIO DE CORRECCIÓN ---
-// Se cambia 'export const permissionModule =' por 'export default'
 export default createBackendModule({
-// --- FIN DE CORRECCIÓN ---
   pluginId: 'permission',
   moduleId: 'lks-permission-policy', 
   register(reg) {
     reg.registerInit({
       deps: { policy: policyExtensionPoint },
       async init({ policy }) {
-        console.log('*** Setting custom LKS Permission Policy with super-user and ownership rules ***');
+        console.log('*** Setting custom LKS Permission Policy with group-admin and ownership rules ***');
         policy.setPolicy(new LksPermissionPolicy());
       },
     });
